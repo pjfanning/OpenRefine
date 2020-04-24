@@ -64,7 +64,6 @@ public class Type implements Function {
                 } else {
                     return v.getClass().getName();
                 }
-
             }
             return "undefined";
         }
