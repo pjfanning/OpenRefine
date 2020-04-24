@@ -57,7 +57,7 @@ public class Type implements Function {
                     return "number";
                 } else if (v.getClass().isArray() || v instanceof List<?>) {
                     return "array";
-                } else if (v instanceof java.lang.Boolean) {
+                } else if (v instanceof java.lang.Boolean) { 
                     return "boolean";
                 } else if (v instanceof EvalError) {
                     return "error";
