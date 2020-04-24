@@ -72,7 +72,7 @@ public class Type implements Function {
 
     @Override
     public String getDescription() {
-        return "Returns the type of o as a string (\"string\", \"date\", \"number\", \"array\", \"boolean\", \"error\" or a class name)";
+        return "Returns the type of o as a string ('string', 'date', 'number', 'array', 'boolean', 'error' or a class name)";
     }
     
     @Override
