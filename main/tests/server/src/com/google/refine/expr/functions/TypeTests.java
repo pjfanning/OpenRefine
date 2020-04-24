@@ -34,7 +34,7 @@ import com.google.refine.util.TestUtils;
 public class TypeTests {
     @Test
     public void serializeType() {
-        String json = "{\"description\":\"Returns the type of o\",\"params\":\"object o\",\"returns\":\"string\"}";
+        String json = "{\"description\":\"Returns the type of o as a string ('string', 'date', 'number', 'array', 'boolean', 'error' or a class name)\",\"params\":\"object o\",\"returns\":\"string\"}";
         TestUtils.isSerializedTo(new Type(), json);
     }
 }
