@@ -93,7 +93,7 @@ public class ExcelImporter extends TabularImportingParserBase {
                     int sheetCount = wb.getNumberOfSheets();
                     for (int i = 0; i < sheetCount; i++) {
                         Sheet sheet = wb.getSheetAt(i);
-                        int rows = sheet.getLastRowNum() - sheet.getFirstRowNum() + 1;
+                        int rows = countRows(sheet);
 
                         ObjectNode sheetRecord = ParsingUtilities.mapper.createObjectNode();
                         JSONUtilities.safePut(sheetRecord, "name",  file.getName() + "#" + sheet.getSheetName());
@@ -187,8 +187,7 @@ public class ExcelImporter extends TabularImportingParserBase {
                 continue;
             
             final Sheet sheet = wb.getSheetAt(Integer.parseInt(fileNameAndSheetIndex[1]));
-            final int lastRow = sheet.getLastRowNum();
-            
+
             TableDataReader dataReader = new TableDataReader() {
                 Iterator<org.apache.poi.ss.usermodel.Row> rowIterator = sheet.rowIterator();
                 
@@ -245,6 +244,14 @@ public class ExcelImporter extends TabularImportingParserBase {
                 .bufferSize(4096)
                 .setUseSstTempFile(true)
                 .open(is);
+    }
+
+    private int countRows(Sheet sheet) {
+        int count = 0;
+        for (org.apache.poi.ss.usermodel.Row r : sheet) {
+            count++;
+        }
+        return count;
     }
     
     static protected Cell extractCell(org.apache.poi.ss.usermodel.Cell cell) {
