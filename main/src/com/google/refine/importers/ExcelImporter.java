@@ -247,11 +247,7 @@ public class ExcelImporter extends TabularImportingParserBase {
     }
 
     private int countRows(Sheet sheet) {
-        int count = 0;
-        for (org.apache.poi.ss.usermodel.Row r : sheet) {
-            count++;
-        }
-        return count;
+        return sheet.getLastRowNum() - sheet.getFirstRowNum() + 1;
     }
     
     static protected Cell extractCell(org.apache.poi.ss.usermodel.Cell cell) {
