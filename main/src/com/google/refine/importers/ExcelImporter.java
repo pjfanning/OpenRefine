@@ -40,24 +40,24 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 import org.apache.poi.ooxml.POIXMLException;
 import org.apache.poi.ss.usermodel.DateUtil;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.poifs.filesystem.FileMagic;
-import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.apache.poi.poifs.filesystem.POIFSFileSystem;
 import org.apache.poi.ss.usermodel.CellType;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.github.pjfanning.xlsx.StreamingReader;
 import com.google.refine.ProjectMetadata;
 import com.google.refine.importing.ImportingJob;
 import com.google.refine.importing.ImportingUtilities;
@@ -87,7 +87,7 @@ public class ExcelImporter extends TabularImportingParserBase {
 
                 Workbook wb = null;
                 try {
-                    wb = FileMagic.valueOf(file) == FileMagic.OOXML ? new XSSFWorkbook(file) :
+                    wb = FileMagic.valueOf(file) == FileMagic.OOXML ? createXlsxWorkbook(file) :
                                  new HSSFWorkbook(new POIFSFileSystem(file));
 
                     int sheetCount = wb.getNumberOfSheets();
@@ -116,7 +116,7 @@ public class ExcelImporter extends TabularImportingParserBase {
             logger.error("Error generating parser UI initialization data for Excel file", e);
         } catch (IllegalArgumentException e) {
             logger.error("Error generating parser UI initialization data for Excel file (only Excel 97 & later supported)", e);
-        } catch (POIXMLException|InvalidFormatException e) {
+        } catch (POIXMLException e) {
             logger.error("Error generating parser UI initialization data for Excel file - invalid XML", e);
         }
         
@@ -141,7 +141,7 @@ public class ExcelImporter extends TabularImportingParserBase {
         
         try {
             wb = FileMagic.valueOf(inputStream) == FileMagic.OOXML ?
-                new XSSFWorkbook(inputStream) :
+                createXlsxWorkbook(inputStream) :
                 new HSSFWorkbook(new POIFSFileSystem(inputStream));
         } catch (IOException e) {
             exceptions.add(new ImportException(
@@ -190,16 +190,16 @@ public class ExcelImporter extends TabularImportingParserBase {
             final int lastRow = sheet.getLastRowNum();
             
             TableDataReader dataReader = new TableDataReader() {
-                int nextRow = 0;
+                Iterator<org.apache.poi.ss.usermodel.Row> rowIterator = sheet.rowIterator();
                 
                 @Override
                 public List<Object> getNextRowOfCells() throws IOException {
-                    if (nextRow > lastRow) {
+                    if (!rowIterator.hasNext()) {
                         return null;
                     }
                     
                     List<Object> cells = new ArrayList<Object>();
-                    org.apache.poi.ss.usermodel.Row row = sheet.getRow(nextRow++);
+                    org.apache.poi.ss.usermodel.Row row = rowIterator.next();
                     if (row != null) {
                         short lastCell = row.getLastCellNum();
                         for (short cellIndex = 0; cellIndex < lastCell; cellIndex++) {
@@ -229,6 +229,22 @@ public class ExcelImporter extends TabularImportingParserBase {
         }
 
         super.parseOneFile(project, metadata, job, fileSource, inputStream, limit, options, exceptions);
+    }
+
+    private Workbook createXlsxWorkbook(File file) {
+        return StreamingReader.builder()
+                .rowCacheSize(100)
+                .bufferSize(4096)
+                .setUseSstTempFile(true)
+                .open(file);
+    }
+
+    private Workbook createXlsxWorkbook(InputStream is) {
+        return StreamingReader.builder()
+                .rowCacheSize(100)
+                .bufferSize(4096)
+                .setUseSstTempFile(true)
+                .open(is);
     }
     
     static protected Cell extractCell(org.apache.poi.ss.usermodel.Cell cell) {
